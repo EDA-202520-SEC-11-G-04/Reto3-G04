@@ -1,12 +1,13 @@
 import sys
-
+from tabulate import tabulate
+import App.logic as logic
+from datetime import datetime
 
 def new_logic():
     """
-        Se crea una instancia del controlador
+    Crea una instancia del controlador (el catálogo).
     """
-    #TODO: Llamar la función de la lógica donde se crean las estructuras de datos
-    pass
+    return logic.new_logic()
 
 def print_menu():
     print("Bienvenido")
@@ -21,18 +22,49 @@ def print_menu():
 
 def load_data(control):
     """
-    Carga los datos
+    Carga los datos de vuelos desde un archivo CSV y muestra un resumen.
     """
-    #TODO: Realizar la carga de datos
-    pass
+    filename = input("Indiquez le chemin du fichier CSV: ")
+    result = logic.load_data(control, filename)
+
+    if not result:
+        print(" No se pudo cargar el archivo.")
+        return control
+
+    elapsed = result["elapsed"]
+    total = result["total"]
+    elements = result["elements"]
+
+    print(f"\nArchivo cargado correctamente en {elapsed:.2f} ms.")
+    print(f" Total de vuelos cargados: {total}")
+
+    # Si hay elementos, mostrar los primeros y últimos 5
+    if total > 0:
+        sample = elements[:5] + elements[-5:] if total > 10 else elements
+        filtered_data = []
+
+        for flight in sample:
+            filtered_data.append({
+                "Fecha": flight.get("date", ""),
+                "Salida": flight.get("dep_time", ""),
+                "Llegada": flight.get("arr_time", ""),
+                "Duración (min)": flight.get("air_time", ""),
+                "Distancia (mi)": flight.get("distance", ""),
+                "Aerolínea": flight.get("carrier", ""),
+                "Origen": flight.get("origin", ""),
+                "Destino": flight.get("dest", "")
+            })
+
+        print("\nPrimeros y últimos vuelos cargados:")
+        print(tabulate(filtered_data, headers="keys", tablefmt="grid", showindex=True))
+
+    return result["catalog"]
 
 
 def print_data(control, id):
-    """
-        Función que imprime un dato dado su ID
-    """
-    #TODO: Realizar la función para imprimir un elemento
-    pass
+    """Función que imprime un vuelo según su ID (placeholder)."""
+    return logic.get_data(control, id)
+
 
 def print_req_1(control):
     """
@@ -83,6 +115,15 @@ def print_req_6(control):
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
+
+def get_time():
+    """Devuelve el instante de tiempo en milisegundos."""
+    return float(time.perf_counter() * 1000)
+
+
+def delta_time(start, end):
+    """Devuelve la diferencia de tiempo entre dos muestras (ms)."""
+    return float(end - start)
 
 # main del ejercicio
 def main():

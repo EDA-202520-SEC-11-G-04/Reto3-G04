@@ -1,23 +1,62 @@
+import csv
 import time
+import DataStructures.List.array_list as list
 
 def new_logic():
     """
     Crea el catalogo para almacenar las estructuras de datos
     """
     #TODO: Llama a las funciónes de creación de las estructuras de datos
-    pass
+    catalog=list.new_list()
+    return catalog
 
 
 # Funciones para la carga de datos
 
-def load_data(catalog, filename):
-    """
-    Carga los datos del reto
-    """
-    # TODO: Realizar la carga de datos
-    pass
 
-# Funciones de consulta sobre el catálogo
+def load_data(control, filename):
+    """
+    Carga los datos del archivo CSV en el catálogo.
+    Retorna el catálogo actualizado si todo sale bien, o None si hay error.
+    """
+    start_time = time.perf_counter()
+
+    try:
+        csv.field_size_limit(2147483647)
+        with open(filename, encoding="utf-8") as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            for row in reader:
+                # Ignorer lignes vides ou malformées
+                if not row or all(v is None or v == "" for v in row.values()):
+                    continue
+
+                clean_row = {}
+                for key, value in row.items():
+                    if key is None:
+                        continue
+                    value = value.strip() if value else "Unknown"
+                    clean_row[key] = value if value != "" else "Unknown"
+
+                list.add_last(control, clean_row)
+
+    except Exception as e:
+        print(f" Error al leer el archivo: {e}")
+        return None
+
+    end_time = time.perf_counter()
+    elapsed = (end_time - start_time) * 1000
+    total = list.size(control)
+
+    # Empaquetar los datos para la vista
+    result = {
+        "catalog": control,
+        "elements": control["elements"],
+        "elapsed": elapsed,
+        "total": total
+    }
+
+    return result
 
 
 def req_1(catalog):
