@@ -68,10 +68,20 @@ def print_data(control, id):
 
 def print_req_1(control):
     """
-        Función que imprime la solución del Requerimiento 1 en consola
+    Imprime la solución del Requerimiento 1 en consola.
     """
-    # TODO: Imprimir el resultado del requerimiento 1
-    pass
+    airline_code = input("Ingrese el código de la aerolínea (ej: 'UA'): ").strip().upper()
+    min_delay = int(input("Ingrese el retraso mínimo (en minutos): "))
+    max_delay = int(input("Ingrese el retraso máximo (en minutos): "))
+
+    result = logic.req_1(control, airline_code, (min_delay, max_delay))
+
+    print(f"\n Tiempo de ejecución: {result['elapsed']:.2f} ms")
+    print(f"  Total de vuelos encontrados: {result['total']}")
+
+    if result["total"] > 0:
+        print("\n Vuelos filtrados:")
+        print(tabulate(result["flights"], headers="keys", tablefmt="grid", showindex=True))
 
 
 def print_req_2(control):
