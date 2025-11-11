@@ -2,6 +2,7 @@ import sys
 from tabulate import tabulate
 import App.logic as logic
 from datetime import datetime
+import DataStructures.List.array_list as list
 
 def new_logic():
     """
@@ -101,19 +102,81 @@ def print_req_3(control):
 
 
 def print_req_4(control):
-    """
-        Función que imprime la solución del Requerimiento 4 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 4
-    pass
+    print("\n=== Requerimiento 4 ===")
+    date_min = input("Fecha inicial (YYYY-MM-DD): ").strip()
+    date_max = input("Fecha final (YYYY-MM-DD): ").strip()
+    time_min = input("Hora de inicio (HH:MM o HHMM): ").strip()
+    time_max = input("Hora final (HH:MM o HHMM): ").strip()
+    n = int(input("Cantidad de aerolíneas a mostrar (N): "))
+
+    result = logic.req_4(control, (date_min, date_max), (time_min, time_max), n)
+
+    if not result or result["total_airlines"] == 0:
+        print("\n No se encontraron aerolíneas en el rango indicado.")
+        return
+
+    print(f"\n Tiempo de ejecución: {result['elapsed']} ms")
+    print(f"  Total de aerolíneas mostradas: {result['total_airlines']}\n")
+
+    table = []
+    airlines = result["airlines"]
+    for i in range(0, list.size(airlines)):
+        a = list.get_element(airlines, i)
+        m = a["Vuelo mínimo"]
+
+        table.append({
+            "Código": a["Carrier"],
+            "N° Vuelos": a["Num vuelos"],
+            "Dur Prom (min)": a["Duración promedio"],
+            "Dist Prom (mi)": a["Distancia promedio"],
+            "Vuelo ID": m["ID"],
+            "Cod Vuelo": m["Código"],
+            "Fecha": m["Fecha"],
+            "Hora Salida": m["Hora salida"],
+            "Origen": m["Origen"],
+            "Destino": m["Destino"],
+            "Duración (min)": m["Duración"],
+        })
+
+    print(tabulate(table, headers="keys", tablefmt="grid", showindex=True))
 
 
 def print_req_5(control):
-    """
-        Función que imprime la solución del Requerimiento 5 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 5
-    pass
+    print("\n=== Requerimiento 5 ===")
+    date_min = input("Fecha inicial (YYYY-MM-DD): ").strip()
+    date_max = input("Fecha final (YYYY-MM-DD): ").strip()
+    dest = input("Código aeropuerto destino (ej: 'JFK'): ").strip().upper()
+    n = int(input("Cantidad de aerolíneas a mostrar (N): "))
+
+    result = logic.req_5(control, (date_min, date_max), dest, n)
+
+    if not result or result["total_airlines"] == 0:
+        print("\n No se encontraron aerolíneas para el filtro indicado.")
+        return
+
+    print(f"\n Tiempo de ejecución: {result['elapsed']} ms")
+    print(f" Aerolíneas mostradas: {result['total_airlines']}\n")
+
+    table = []
+    airlines = result["airlines"]
+    for i in range(0, list.size(airlines) ):
+        a = list.get_element(airlines, i)
+        maxf = a["Vuelo max distancia"] if a["Vuelo max distancia"] else {}
+        table.append({
+            "Código": a["Carrier"],
+            "N° Vuelos": a["Num vuelos"],
+            "Dur Prom (min)": a["Duración promedio"],
+            "Dist Prom (mi)": a["Distancia promedio"],
+            "Puntualidad Prom (min)": a["Puntualidad promedio"],
+            "ID MaxDist": maxf.get("ID", ""),
+            "Vuelo": maxf.get("Vuelo", ""),
+            "Fecha-Hora llegada": maxf.get("Fecha-Hora llegada", ""),
+            "Origen": maxf.get("Origen", ""),
+            "Destino": maxf.get("Destino", ""),
+            "Duración (min)": maxf.get("Duración", "")
+        })
+
+    print(tabulate(table, headers="keys", tablefmt="grid", showindex=True))
 
 
 def print_req_6(control):
