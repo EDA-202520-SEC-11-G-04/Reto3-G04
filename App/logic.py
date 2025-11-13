@@ -556,11 +556,9 @@ def req_6(control, date_range, distance_range, m):
         return {"total_airlines": 0, "airlines": list.new_list(), "elapsed": 0}
     
     flights_by_distance = bst.new_map()
-    flights_list = control["flights"]
     
     # Insertar vuelos por distancia
-    for i in range(list.size(flights_list)):
-        flight = list.get_element(flights_list, i)
+    for flight in control["elements"]:
         
         # Filtrar por rango de fechas
         try:
