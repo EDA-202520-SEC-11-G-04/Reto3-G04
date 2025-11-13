@@ -172,12 +172,132 @@ def req_2(catalog):
     pass
 
 
-def req_3(catalog):
+
+def req_3(control, carrier_code, dest_code, distance_range):
     """
     Retorna el resultado del requerimiento 3
     """
-    # TODO: Modificar el requerimiento 3
-    pass
+    start_time = time.perf_counter()
+    
+    # Extraer parámetros y normalizar
+    dist_min, dist_max = distance_range
+    carrier_code = carrier_code.strip().upper()
+    dest_code = dest_code.strip().upper()
+    
+    flights_by_distance = bst.new_map()
+    
+    for flight in control["elements"]:
+        
+        carrier = flight.get("carrier", "").strip().upper()
+        if carrier != carrier_code:
+            continue
+        
+        dest = flight.get("dest", "").strip().upper()
+        if dest != dest_code:
+            continue
+        
+        try:
+            distance_str = flight.get("distance", "Unknown")
+            if distance_str == "Unknown" or distance_str == "":
+                continue
+            distance = float(distance_str)
+        except (ValueError, TypeError):
+            continue
+        
+        # Insertar en BST por distancia
+        if bst.contains(flights_by_distance, distance):
+            flight_list = bst.get(flights_by_distance, distance)
+            list.add_last(flight_list, flight)
+        else:
+            flight_list = list.new_list()
+            list.add_last(flight_list, flight)
+            bst.put(flights_by_distance, distance, flight_list)
+    
+    # Obtener vuelos en el rango de distancias
+    flights_in_range = bst.values(flights_by_distance, dist_min, dist_max)
+    
+    # Lista para almacenar resultados
+    result_flights = list.new_list()
+    
+    # Recorrer vuelos
+    for i in range(sl.size(flights_in_range)):
+        flight_list = sl.get_element(flights_in_range, i)
+        
+        for j in range(list.size(flight_list)):
+            flight = list.get_element(flight_list, j)
+            
+            # Extraer información del vuelo
+            flight_info = {
+                "ID": flight.get("id", "Unknown"),
+                "Código": flight.get("flight", "Unknown"),
+                "Fecha": flight.get("date", "Unknown"),
+                "Aerolínea": flight.get("name", "Unknown"),
+                "Carrier": flight.get("carrier", "Unknown"),
+                "Origen": flight.get("origin", "Unknown"),
+                "Destino": flight.get("dest", "Unknown"),
+                "Distancia": float(flight.get("distance", 0)),
+                "arr_time": flight.get("arr_time", "Unknown"),  
+                "date_obj": None 
+            }
+            
+            try:
+                date_str = flight.get("date", "")
+                arr_time = flight.get("arr_time", "")
+                if date_str and arr_time and arr_time != "Unknown":
+                    if ":" in arr_time:
+                        flight_info["date_obj"] = datetime.strptime(
+                            f"{date_str} {arr_time}", "%Y-%m-%d %H:%M"
+                        )
+                    else:
+                        if len(arr_time) == 4:
+                            arr_formatted = arr_time[:2] + ":" + arr_time[2:]
+                        elif len(arr_time) == 3:
+                            arr_formatted = arr_time[0] + ":" + arr_time[1:]
+                        else:
+                            arr_formatted = arr_time
+                        flight_info["date_obj"] = datetime.strptime(
+                            f"{date_str} {arr_formatted}", "%Y-%m-%d %H:%M"
+                        )
+            except:
+                pass
+            
+            list.add_last(result_flights, flight_info)
+    
+    # Ordenar por distancia
+    def sort_criteria(f1, f2):
+        if abs(f1["Distancia"] - f2["Distancia"]) > 0.01:
+            return f1["Distancia"] < f2["Distancia"]
+        
+        # Ordenar por llegada en caso de empate
+        if f1["date_obj"] and f2["date_obj"]:
+            return f1["date_obj"] < f2["date_obj"]
+        
+        return True
+    
+    sorted_flights = list.merge_sort(result_flights, sort_criteria)
+    
+    end_time = time.perf_counter()
+    elapsed_ms = (end_time - start_time) * 1000
+    
+    total = list.size(sorted_flights)
+    
+    # Mostrar solo 5 primeros y 5 últimos
+    if total > 10:
+        flights_to_display = list.new_list()
+        for i in range(5):
+            list.add_last(flights_to_display, list.get_element(sorted_flights, i))
+        
+        for i in range(total - 5, total):
+            list.add_last(flights_to_display, list.get_element(sorted_flights, i))
+    else:
+        flights_to_display = sorted_flights
+    
+    return {
+        "total_flights": total,
+        "flights": flights_to_display,
+        "elapsed": f"{elapsed_ms:.2f}",
+        "showing_sample": total > 10
+    }
 
 
 def sort_criteria_req4(a, b):
@@ -541,6 +661,9 @@ def req_5(catalog, date_range, dest_code, n):
     
 
 def req_6(control, date_range, distance_range, m):
+    """
+    Retorna el resultado del requerimiento 6
+    """
     
     start_time = time.perf_counter()
     

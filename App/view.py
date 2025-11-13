@@ -95,10 +95,47 @@ def print_req_2(control):
 
 def print_req_3(control):
     """
-        Función que imprime la solución del Requerimiento 3 en consola
+    Función que imprime la solución del Requerimiento 3 en consola
     """
-    # TODO: Imprimir el resultado del requerimiento 3
-    pass
+    print("\n=== Requerimiento 3 ===")
+    carrier = input("Código de aerolínea (ej: 'AA', 'EV'): ").strip().upper()
+    dest = input("Código aeropuerto destino (ej: 'JFK'): ").strip().upper()
+    dist_min = int(input("Distancia mínima (millas): "))
+    dist_max = int(input("Distancia máxima (millas): "))
+
+    result = logic.req_3(control, carrier, dest, (dist_min, dist_max))
+
+    if not result or result["total_flights"] == 0:
+        print("\n No se encontraron vuelos que cumplan los criterios.")
+        return
+
+    print(f"\n Tiempo de ejecución: {result['elapsed']} ms")
+    print(f" Total de vuelos encontrados: {result['total_flights']}")
+    
+    if result["showing_sample"]:
+        print("📋 Mostrando primeros 5 y últimos 5 vuelos\n")
+    else:
+        print("📋 Mostrando todos los vuelos\n")
+
+    # Preparar tabla de resultados
+    table = []
+    flights = result["flights"]
+    
+    for i in range(0, list.size(flights)):
+        f = list.get_element(flights, i)
+        
+        table.append({
+            "ID": f["ID"],
+            "Código": f["Código"],
+            "Fecha": f["Fecha"],
+            "Aerolínea": f["Aerolínea"],
+            "Carrier": f["Carrier"],
+            "Origen": f["Origen"],
+            "Destino": f["Destino"],
+            "Distancia (mi)": f["Distancia"]
+        })
+
+    print(tabulate(table, headers="keys", tablefmt="grid", showindex=True))
 
 
 def print_req_4(control):
