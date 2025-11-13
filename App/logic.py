@@ -590,15 +590,14 @@ def req_6(control, date_range, distance_range, m):
             list.add_last(flight_list, flight)
             bst.put(flights_by_distance, distance, flight_list)
     
-    # Obtener vuelos en el rango de distancias
+    
     flights_in_range_values = bst.values(flights_by_distance, dist_min, dist_max)
     
     # Diccionario para agrupar por aerolinea
     airlines_data = {}
     
-    # Procesar todos los vuelos que están en el rango de distancias
-    for i in range(list.size(flights_in_range_values)):
-        flight_list = list.get_element(flights_in_range_values, i)
+    for i in range(sl.size(flights_in_range_values)):  # ✅ Usar sl.size()
+        flight_list = sl.get_element(flights_in_range_values, i)  # ✅ Usar sl.get_element()
         
         for j in range(list.size(flight_list)):
             flight = list.get_element(flight_list, j)
