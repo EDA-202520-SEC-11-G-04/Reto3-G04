@@ -1,5 +1,6 @@
 import csv
 import time
+import math
 import DataStructures.List.array_list as list
 import DataStructures.List.single_linked_list as sl
 import DataStructures.Tree.binary_search_tree as bst
@@ -382,7 +383,7 @@ def req_5(catalog, date_range, dest_code, n):
     # Árbol BST: clave = aerolínea, valor = lista de vuelos filtrados
     airlines_tree = bst.new_map()
 
-    # 1️⃣ Filtrar vuelos por fecha y aeropuerto de destino
+    # Filtrar vuelos por fecha y aeropuerto de destino
     for flight in catalog["elements"]:
         try:
             fdate = datetime.strptime(flight.get("date", ""), "%Y-%m-%d")
@@ -538,12 +539,242 @@ def req_5(catalog, date_range, dest_code, n):
     }
 
     
-def req_6(catalog):
-    """
-    Retorna el resultado del requerimiento 6
-    """
-    # TODO: Modificar el requerimiento 6
-    pass
+
+def req_6(control, date_range, distance_range, m):
+    
+    start_time = time.perf_counter()
+    
+    # Extraer parametros
+    date_min_str, date_max_str = date_range
+    dist_min, dist_max = distance_range
+    
+    # Convertir fechas a objetos datetime
+    try:
+        date_min = datetime.strptime(date_min_str, "%Y-%m-%d")
+        date_max = datetime.strptime(date_max_str, "%Y-%m-%d")
+    except ValueError:
+        return {"total_airlines": 0, "airlines": list.new_list(), "elapsed": 0}
+    
+    flights_by_distance = bst.new_map()
+    flights_list = control["flights"]
+    
+    # Insertar vuelos por distancia
+    for i in range(list.size(flights_list)):
+        flight = list.get_element(flights_list, i)
+        
+        # Filtrar por rango de fechas
+        try:
+            flight_date_str = flight.get("date", "Unknown")
+            if flight_date_str == "Unknown":
+                continue
+            flight_date = datetime.strptime(flight_date_str, "%Y-%m-%d")
+            
+            if not (date_min <= flight_date <= date_max):
+                continue
+        except ValueError:
+            continue
+        
+        # Obtener distancia
+        try:
+            distance_str = flight.get("distance", "Unknown")
+            if distance_str == "Unknown" or distance_str == "":
+                continue
+            distance = float(distance_str)
+        except (ValueError, TypeError):
+            continue
+        
+        # Insertar en BST
+        if bst.contains(flights_by_distance, distance):
+            flight_list = bst.get(flights_by_distance, distance)
+            list.add_last(flight_list, flight)
+        else:
+            flight_list = list.new_list()
+            list.add_last(flight_list, flight)
+            bst.put(flights_by_distance, distance, flight_list)
+    
+    # Obtener vuelos en el rango de distancias
+    flights_in_range_values = bst.values(flights_by_distance, dist_min, dist_max)
+    
+    # Diccionario para agrupar por aerolinea
+    airlines_data = {}
+    
+    # Procesar todos los vuelos que están en el rango de distancias
+    for i in range(list.size(flights_in_range_values)):
+        flight_list = list.get_element(flights_in_range_values, i)
+        
+        for j in range(list.size(flight_list)):
+            flight = list.get_element(flight_list, j)
+            delay = calculate_departure_delay(flight)
+            if delay is None:
+                continue
+            carrier = flight.get("carrier", "Unknown")
+            if carrier == "Unknown":
+                continue
+                
+            if carrier not in airlines_data:
+                airlines_data[carrier] = {
+                    "delays": [],
+                    "flights": []
+                }
+            
+            airlines_data[carrier]["delays"].append(delay)
+            airlines_data[carrier]["flights"].append(flight)
+    
+    # Calcular estadisticas para cada aerolinea
+    airlines_stats = list.new_list()
+    
+    for carrier, data in airlines_data.items():
+        delays = data["delays"]
+        flights = data["flights"]
+        
+        if len(delays) == 0:
+            continue
+        
+        average_delay = sum(delays) / len(delays)
+        
+        # Calcular desviacion
+        variance = sum((d - average_delay) ** 2 for d in delays) / len(delays)
+        std_deviation = math.sqrt(variance)
+        
+        # Encontrar vuelo con retraso cerca al promedio
+        closest_flight = None
+        min_difference = float('inf')
+        
+        for idx, delay in enumerate(delays):
+            difference = abs(delay - average_delay)
+            if difference < min_difference:
+                min_difference = difference
+                closest_flight = flights[idx]
+        
+        # Crear objeto de estadisticas de aerolinea
+        airline_stat = {
+            "carrier": carrier,
+            "num_flights": len(delays),
+            "average_delay": average_delay,
+            "stability": std_deviation,
+            "closest_flight": closest_flight
+        }
+        
+        list.add_last(airlines_stats, airline_stat)
+    
+    def sort_criteria(a1, a2):
+        diff = abs(a1["stability"] - a2["stability"])
+        if diff < 0.0001:
+            return a1["average_delay"] < a2["average_delay"]
+        return a1["stability"] < a2["stability"]
+    
+    sorted_airlines = list.merge_sort(airlines_stats, sort_criteria)
+    
+    # Tomar las M primeras aerolíneas
+    result_airlines = list.new_list()
+    total = min(m, list.size(sorted_airlines))
+    
+    for i in range(total):
+        airline = list.get_element(sorted_airlines, i)
+        
+        # Cambiar informacion del vuelo más cercano
+        closest = airline["closest_flight"]
+        closest_info = {}
+        
+        if closest:
+            dep_time = closest.get("dep_time", "Unknown")
+            date_str = closest.get("date", "Unknown")
+            
+            closest_info = {
+                "ID": closest.get("id", "Unknown"),
+                "Código": closest.get("flight", "Unknown"),
+                "Fecha-Hora salida": f"{date_str} {dep_time}",
+                "Origen": closest.get("origin", "Unknown"),
+                "Destino": closest.get("dest", "Unknown")
+            }
+        
+        # Formatear información de la aerolinea
+        airline_info = {
+            "Carrier": airline["carrier"],
+            "Num vuelos": airline["num_flights"],
+            "Promedio retraso": airline["average_delay"],
+            "Estabilidad": airline["stability"],
+            "Vuelo más cercano al promedio": closest_info
+        }
+        
+        list.add_last(result_airlines, airline_info)
+    
+    end_time = time.perf_counter()
+    elapsed_ms = (end_time - start_time) * 1000
+    
+    return {
+        "total_airlines": list.size(result_airlines),
+        "airlines": result_airlines,
+        "elapsed": f"{elapsed_ms:.2f}"
+    }
+
+
+def calculate_departure_delay(flight):
+    try:
+        dep_time = flight.get("dep_time", "Unknown")
+        sched_dep_time = flight.get("sched_dep_time", "Unknown")
+        
+        if dep_time == "Unknown" or sched_dep_time == "Unknown":
+            return None
+        
+        if dep_time == "" or sched_dep_time == "":
+            return None
+        
+        # Convertir horas a minutos
+        dep_minutes = convert_time_to_minutes(dep_time)
+        sched_minutes = convert_time_to_minutes(sched_dep_time)
+        
+        if dep_minutes is None or sched_minutes is None:
+            return None
+        
+        # Calcular diferencia
+        difference = dep_minutes - sched_minutes
+        
+        if difference > 720: 
+            difference -= 1440
+        elif difference < -720:
+            difference += 1440 
+        
+        return difference
+        
+    except Exception:
+        return None
+
+
+def convert_time_to_minutes(time_str):
+    
+    try:
+        # Limpiar espacios
+        time_str = time_str.strip()
+        
+        if ':' in time_str:
+            parts = time_str.split(":")
+            hours = int(parts[0])
+            minutes = int(parts[1])
+        else:
+            if len(time_str) == 4:
+                hours = int(time_str[:2])
+                minutes = int(time_str[2:])
+            elif len(time_str) == 3:
+                hours = int(time_str[0])
+                minutes = int(time_str[1:])
+            elif len(time_str) == 2:
+                hours = int(time_str)
+                minutes = 0
+            elif len(time_str) == 1:
+                hours = int(time_str)
+                minutes = 0
+            else:
+                return None
+        
+        # Validar rangos
+        if hours < 0 or hours > 23 or minutes < 0 or minutes > 59:
+            return None
+        
+        return hours * 60 + minutes
+        
+    except (ValueError, IndexError, AttributeError):
+        return None
 
 
 # Funciones para medir tiempos de ejecucion

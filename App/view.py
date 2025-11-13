@@ -180,18 +180,49 @@ def print_req_5(control):
 
 
 def print_req_6(control):
-    """
-        Función que imprime la solución del Requerimiento 6 en consola
-    """
-    # TODO: Imprimir el resultado del requerimiento 6
-    pass
+    print("\n=== Requerimiento 6 ===")
+    date_min = input("Fecha inicial (YYYY-MM-DD): ").strip()
+    date_max = input("Fecha final (YYYY-MM-DD): ").strip()
+    dist_min = int(input("Distancia mínima (millas): "))
+    dist_max = int(input("Distancia máxima (millas): "))
+    m = int(input("Cantidad de aerolíneas a mostrar (M): "))
+
+    result = logic.req_6(control, (date_min, date_max), (dist_min, dist_max), m)
+
+    if not result or result["total_airlines"] == 0:
+        print("\n No se encontraron aerolíneas en el rango indicado.")
+        return
+
+    print(f"\n Tiempo de ejecución: {result['elapsed']} ms")
+    print(f" Total de aerolíneas analizadas: {result['total_airlines']}\n")
+
+    table = []
+    airlines = result["airlines"]
+    
+    for i in range(0, list.size(airlines)):
+        a = list.get_element(airlines, i)
+        closest = a["Vuelo más cercano al promedio"] if a["Vuelo más cercano al promedio"] else {}
+        
+        table.append({
+            "Código": a["Carrier"],
+            "N° Vuelos": a["Num vuelos"],
+            "Prom Retraso (min)": f"{a['Promedio retraso']:.2f}",
+            "Estabilidad (σ)": f"{a['Estabilidad']:.2f}",
+            "ID Vuelo": closest.get("ID", ""),
+            "Cod Vuelo": closest.get("Código", ""),
+            "Fecha-Hora salida": closest.get("Fecha-Hora salida", ""),
+            "Origen": closest.get("Origen", ""),
+            "Destino": closest.get("Destino", "")
+        })
+
+    print(tabulate(table, headers="keys", tablefmt="grid", showindex=True))
 
 # Se crea la lógica asociado a la vista
 control = new_logic()
 
 def get_time():
     """Devuelve el instante de tiempo en milisegundos."""
-    return float(time.perf_counter() * 1000)
+    return float(datetime.perf_counter() * 1000)
 
 
 def delta_time(start, end):
@@ -226,7 +257,7 @@ def main():
         elif int(inputs) == 5:
             print_req_5(control)
 
-        elif int(inputs) == 5:
+        elif int(inputs) == 6:
             print_req_6(control)
 
         elif int(inputs) == 7:
