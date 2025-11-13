@@ -98,8 +98,8 @@ def print_req_3(control):
     Función que imprime la solución del Requerimiento 3 en consola
     """
     print("\n=== Requerimiento 3 ===")
-    carrier = input("Código de aerolínea (ej: 'AA', 'EV'): ").strip().upper()
-    dest = input("Código aeropuerto destino (ej: 'JFK'): ").strip().upper()
+    carrier = input("Código de aerolínea en formato 'AA': ").strip().upper()
+    dest = input("Código aeropuerto destino en fromato 'JFK': ").strip().upper()
     dist_min = int(input("Distancia mínima (millas): "))
     dist_max = int(input("Distancia máxima (millas): "))
 
@@ -113,9 +113,9 @@ def print_req_3(control):
     print(f" Total de vuelos encontrados: {result['total_flights']}")
     
     if result["showing_sample"]:
-        print("📋 Mostrando primeros 5 y últimos 5 vuelos\n")
+        print("Mostrando primeros 5 y últimos 5 vuelos\n")
     else:
-        print("📋 Mostrando todos los vuelos\n")
+        print("Mostrando todos los vuelos\n")
 
     # Preparar tabla de resultados
     table = []
